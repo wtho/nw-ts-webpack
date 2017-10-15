@@ -1,7 +1,7 @@
 {
   "name": "nw-ts-webpack-starter",
   "version": "0.1.0",
-  "description": "A starter for a project with TypeScript code, running in Node-Webgui, bundled and hot-deployed by Webpack.",
+  "description": "A starter for a project with TypeScript code, running in Node-Webkit, bundled and hot-deployed by Webpack.",
   "scripts": {
     "clean": "npm cache clean --force && npm run rimraf -- node_modules dist",
     "clean:dist": "npm run rimraf -- dist",
@@ -23,7 +23,7 @@
   },
   "keywords": [
     "webkit",
-    "node-webgui",
+    "node-webkit",
     "typescript"
   ],
   "author": "Thomas Wirth <t@ghci.de>",
