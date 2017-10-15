@@ -1,0 +1,18 @@
+{
+  "main": "index.html",
+  "name": "nw-ts-webpack",
+  "chomium-args": "--enable-logging=stdout",
+  "window": {
+    "show": true,
+    "toolbar": true,
+    "frame": true,
+    "width": 1366,
+    "height": 24,
+    "min_width": 1366,
+    "min_height": 16,
+    "max_height": 24,
+    "resizable": false,
+    "show_in_taskbar": false,
+    "transparent": true
+  }
+}
