@@ -8,24 +8,37 @@ const chalk = require('chalk')
 const jsonFormat = require('json-format')
 const shell = require('shelljs')
 const argv = require('yargs').argv
-const spinner = ora({text: 'compiling', spinner: 'dots2'})
+let spinner = ora({text: 'compiling', spinner: 'dots2'})
 
 const config = require('./config')
 const webpackConfigFn = require('./webpack.dev')
 const helpers = require('./helpers')
 
+
 const webpackConfig = webpackConfigFn(argv.env, argv)
 const compiler = webpack(webpackConfig)
 
+const devMiddleware = new WebpackDevMiddleware(compiler, {
+  publicPath: webpackConfig.output.publicPath,
+  quiet: true
+})
+
+const hotMiddleware = new WebpackHotMiddleware(compiler, {log: false})
+
 let firstRun = true
 compiler.plugin('done', stats => {
+  const error = stats.compilation.errors.length > 0
   if (firstRun) {
-    spinner.succeed('compilation successful')
-    process.stdout.write(stats.toString({colors: true, modules: false, children: false, chunks: false, chunkModules: false}) + '\n')
-    process.stdout.write(chalk.bold('Local dev server : '))
-    process.stdout.write(chalk.underline(`http://localhost:${config.server.port}`) + '\n')
-    startNwjsClient()
-    firstRun = false
+    if (error) {
+      spinner.fail('compilation failed')
+      process.stdout.write(stats.toString({colors: true, modules: false, children: false, chunks: false, chunkModules: false}) + '\n') 
+    } else {
+      spinner.succeed('compilation successful')
+      process.stdout.write(chalk.bold('Local dev server : '))
+      process.stdout.write(chalk.underline(`http://localhost:${config.server.port}`) + '\n')
+      startNwjsClient()
+      firstRun = false
+    }
   }
 })
 
@@ -38,7 +51,7 @@ compiler.plugin('compilation', function(compilation) {
 
 
 function startNwjsClient() {
-  const nwjsConfig = JSON.parse(fs.readFileSync(helpers.root(`${config.path.main}/nwjs.json`)).toString())
+  const nwjsConfig = config.nwPackageJson
   nwjsConfig['node-remote'] = nwjsConfig.main = `http://localhost:${config.server.port}/${nwjsConfig.main}`
   shell.rm('-rf', helpers.root('.dev_client'))
   shell.exec('mkdir .dev_client', {async: false})
@@ -55,11 +68,8 @@ function startNwjsClient() {
 }
 
 const app = express()
-app.use(WebpackDevMiddleware(compiler, {
-  publicPath: webpackConfig.output.publicPath,
-  quiet: true
-}))
-app.use(WebpackHotMiddleware(compiler, {log: false}))
+app.use(devMiddleware)
+app.use(hotMiddleware)
 
 app.listen(config.server.port, (err) => {
   err && console.log(err)

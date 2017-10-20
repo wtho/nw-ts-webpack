@@ -1,6 +1,6 @@
 const helpers = require('./helpers')
 const webpackMerge = require('webpack-merge')
-const commonConfig = require('./webpack.common.js');
+const commonConfigFn = require('./webpack.common.js');
 const config = require('./config')
 
 /**
@@ -8,9 +8,11 @@ const config = require('./config')
  */
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin')
+const IgnorePlugin = require('webpack/lib/IgnorePlugin')
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin')
 const HotModuleReplacementPlugin = require('webpack/lib/HotModuleReplacementPlugin')
 const NoEmitOnErrorsPlugin = require('webpack/lib/NoEmitOnErrorsPlugin')
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
 
 /**
  * Webpack Constants
@@ -30,6 +32,11 @@ const METADATA = {
 
 
 // const DllBundlesPlugin = require('webpack-dll-bundles-plugin').DllBundlesPlugin
+const commonConfig = commonConfigFn({env: ENV})
+
+Object.keys(commonConfig.entry).forEach(function(name) {
+  commonConfig.entry[name] = [helpers.root('config/hotReload')].concat(commonConfig.entry[name])
+});
 
 /**
  * Webpack configuration
@@ -37,7 +44,7 @@ const METADATA = {
  * See: http://webpack.github.io/docs/configuration.html#cli
  */
 module.exports = function (options) {
-  return webpackMerge(commonConfig({env: ENV}), {
+  return webpackMerge(commonConfig, {
 
     /**
      * Developer tool to enhance debugging
@@ -77,6 +84,7 @@ module.exports = function (options) {
     },
 
     plugins: [
+      new IgnorePlugin(/nw.gui/),
       new DefinePlugin({
         'ENV': JSON.stringify(METADATA.ENV),
         'HMR': METADATA.HMR,
@@ -90,6 +98,7 @@ module.exports = function (options) {
         }
       }),
       new NoEmitOnErrorsPlugin(),
+      new FriendlyErrorsWebpackPlugin(),
       new HotModuleReplacementPlugin()
     ],
 

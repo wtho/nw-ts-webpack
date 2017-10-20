@@ -1,3 +1,6 @@
+# Build folder
+.dev_client/
+
 # Logs
 logs
 *.log
@@ -20,6 +23,9 @@ coverage
 # nyc test coverage
 .nyc_output
 
+# awcache
+.awcache/
+
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
@@ -35,6 +41,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+nwjs*/
 
 # Typescript v1 declaration files
 typings/
