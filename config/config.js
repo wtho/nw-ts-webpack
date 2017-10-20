@@ -21,7 +21,7 @@ const production = {
     ...nwPackageJson
   },
   path: {
-    main: 'src/app/app.ts',
+    main: 'src/main.ts',
     mainTemplate: 'src/app/index.html',
     output: 'dist'
   }

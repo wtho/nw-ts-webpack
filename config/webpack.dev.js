@@ -3,20 +3,17 @@ const webpackMerge = require('webpack-merge')
 const commonConfigFn = require('./webpack.common.js');
 const config = require('./config')
 
-/**
- * Webpack Plugins
- */
+// plugins
 const DefinePlugin = require('webpack/lib/DefinePlugin')
 const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin')
 const IgnorePlugin = require('webpack/lib/IgnorePlugin')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin')
 const HotModuleReplacementPlugin = require('webpack/lib/HotModuleReplacementPlugin')
 const NoEmitOnErrorsPlugin = require('webpack/lib/NoEmitOnErrorsPlugin')
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
 
-/**
- * Webpack Constants
- */
+// settings
 const ENV = process.env.ENV = process.env.NODE_ENV = 'development'
 const HOST = process.env.HOST || 'localhost'
 const PORT = process.env.PORT || 3000
@@ -30,35 +27,18 @@ const METADATA = {
   HMR: HMR
 }
 
-
-// const DllBundlesPlugin = require('webpack-dll-bundles-plugin').DllBundlesPlugin
 const commonConfig = commonConfigFn({env: ENV})
 
 Object.keys(commonConfig.entry).forEach(function(name) {
   commonConfig.entry[name] = [helpers.root('config/hotReload')].concat(commonConfig.entry[name])
 });
 
-/**
- * Webpack configuration
- *
- * See: http://webpack.github.io/docs/configuration.html#cli
- */
+const extractCssPlugin = new ExtractTextPlugin('.dev-client/[name].[hash].css')
+
 module.exports = function (options) {
   return webpackMerge(commonConfig, {
-
-    /**
-     * Developer tool to enhance debugging
-     *
-     * See: http://webpack.github.io/docs/configuration.html#devtool
-     * See: https://github.com/webpack/docs/wiki/build-performance#sourcemaps
-     */
     devtool: 'cheap-module-source-map',
 
-    /**
-     * Options affecting the output of the compilation.
-     *
-     * See: http://webpack.github.io/docs/configuration.html#output
-     */
     output: {
       path: helpers.root(config.path.output),
       filename: '[name].bundle.js',
@@ -68,22 +48,41 @@ module.exports = function (options) {
     },
 
     module: {
-
       rules: [
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader'],
-          include: [helpers.root('src', 'styles')]
+          use: extractCssPlugin.extract([
+            'css-loader',
+            {
+              loader: 'postcss-loader',
+              options: {
+                config: {
+                  path: './config'
+                }
+              }
+            }
+          ])
         },
         {
           test: /\.scss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
-          include: [helpers.root('src', 'styles')]
+          use: extractCssPlugin.extract([
+            'css-loader',
+            {
+              loader: 'postcss-loader',
+              options: {
+                config: {
+                  path: './config'
+                }
+              }
+            },
+            'sass-loader'
+          ])
         },
       ]
     },
 
     plugins: [
+      extractCssPlugin,
       new IgnorePlugin(/nw.gui/),
       new DefinePlugin({
         'ENV': JSON.stringify(METADATA.ENV),
@@ -101,16 +100,6 @@ module.exports = function (options) {
       new FriendlyErrorsWebpackPlugin(),
       new HotModuleReplacementPlugin()
     ],
-
-    devServer: {
-      port: METADATA.port,
-      host: METADATA.host,
-      hot: METADATA.HMR,
-      public: METADATA.public,
-      watchOptions: {
-        ignored: /node_modules/
-      }
-    },
     node: {
       global: true,
       crypto: 'empty',

@@ -56,9 +56,12 @@ function startNwjsClient() {
   shell.rm('-rf', helpers.root('.dev_client'))
   shell.exec('mkdir .dev_client', {async: false})
   fs.writeFile(helpers.root(`.dev_client/package.json`), jsonFormat(nwjsConfig), (err) => {
+    const nwjsFolder = shell.ls().find(folder => folder.startsWith('nwjs-sdk'))
     if (err)
       throw err
-    if (!shell.which('nw')) {
+    if (nwjsFolder && fs.existsSync(helpers.root(nwjsFolder, 'nw'))) {
+      shell.exec(`./${nwjsFolder}/nw .dev_client`, {async: true})
+    } else if (!shell.which('nw')) {
       shell.echo('Sorry, this client requires nw, maybe you try \'sudo npm install -g nw\'')
       shell.exit(1)
     }else{

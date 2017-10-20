@@ -1,5 +1,6 @@
 # Build folder
 .dev_client/
+dist/
 
 # Logs
 logs

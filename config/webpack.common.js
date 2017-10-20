@@ -1,14 +1,12 @@
 const webpack = require('webpack')
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const { CheckerPlugin } = require('awesome-typescript-loader')
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin')
 
 const helpers = require('./helpers')
 const config = require('./config')
 
-const extractCssPlugin = new ExtractTextPlugin('.dev-client/[name].[hash].css')
 
 module.exports = function (options) {
   isProd = options.env === 'production'
@@ -40,35 +38,6 @@ module.exports = function (options) {
           exclude: [/\.(spec|e2e)\.ts$/]
         },
         {
-          test: /\.css$/,
-          use: extractCssPlugin.extract([
-            'css-loader',
-            {
-              loader: 'postcss-loader',
-              options: {
-                config: {
-                  path: './config'
-                }
-              }
-            }
-          ])
-        },
-        {
-          test: /\.scss$/,
-          use: extractCssPlugin.extract([
-            'css-loader',
-            {
-              loader: 'postcss-loader',
-              options: {
-                config: {
-                  path: './config'
-                }
-              }
-            },
-            'sass-loader'
-          ])
-        },
-        {
           test: /\.html$/,
           use: 'html-loader'
         },
@@ -91,7 +60,6 @@ module.exports = function (options) {
         inject: 'true',
         title: config.title
       }),
-      extractCssPlugin,
       new LoaderOptionsPlugin({}),
     ],
 
