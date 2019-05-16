@@ -5,11 +5,10 @@ const config = require('./config')
 
 // plugins
 const DefinePlugin = require('webpack/lib/DefinePlugin')
-const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin')
 const IgnorePlugin = require('webpack/lib/IgnorePlugin')
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin')
 const HotModuleReplacementPlugin = require('webpack/lib/HotModuleReplacementPlugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const NoEmitOnErrorsPlugin = require('webpack/lib/NoEmitOnErrorsPlugin')
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
 
@@ -33,10 +32,12 @@ Object.keys(commonConfig.entry).forEach(function(name) {
   commonConfig.entry[name] = [helpers.root('config/hotReload')].concat(commonConfig.entry[name])
 });
 
-const extractCssPlugin = new ExtractTextPlugin('.dev-client/[name].[hash].css')
+
 
 module.exports = function (options) {
   return webpackMerge(commonConfig, {
+    mode: 'development',
+
     devtool: 'cheap-module-source-map',
 
     output: {
@@ -51,7 +52,13 @@ module.exports = function (options) {
       rules: [
         {
           test: /\.css$/,
-          use: extractCssPlugin.extract([
+          use: [
+            {
+              loader: MiniCssExtractPlugin.loader,
+              options: {
+                hmr: true
+              },
+            },
             'css-loader',
             {
               loader: 'postcss-loader',
@@ -61,11 +68,17 @@ module.exports = function (options) {
                 }
               }
             }
-          ])
+          ]
         },
         {
           test: /\.scss$/,
-          use: extractCssPlugin.extract([
+          use: [
+            {
+              loader: MiniCssExtractPlugin.loader,
+              options: {
+                hmr: true
+              },
+            },
             'css-loader',
             {
               loader: 'postcss-loader',
@@ -76,13 +89,18 @@ module.exports = function (options) {
               }
             },
             'sass-loader'
-          ])
+          ]
         },
       ]
     },
 
     plugins: [
-      extractCssPlugin,
+      new MiniCssExtractPlugin({
+        // Options similar to the same options in webpackOptions.output
+        // both options are optional
+        filename: '[name].css',
+        chunkFilename: '[id].css',
+      }),
       new IgnorePlugin(/nw.gui/),
       new DefinePlugin({
         'ENV': JSON.stringify(METADATA.ENV),
@@ -100,6 +118,7 @@ module.exports = function (options) {
       new FriendlyErrorsWebpackPlugin(),
       new HotModuleReplacementPlugin()
     ],
+
     node: {
       global: true,
       crypto: 'empty',

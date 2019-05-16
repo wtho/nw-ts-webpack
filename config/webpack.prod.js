@@ -7,18 +7,15 @@ const config = require('./config')
 
 // Plugins
 const DefinePlugin = require('webpack/lib/DefinePlugin')
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const HashedModuleIdsPlugin = require('webpack/lib/HashedModuleIdsPlugin')
-const IgnorePlugin = require('webpack/lib/IgnorePlugin')
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin')
-const NormalModuleReplacementPlugin = require('webpack/lib/NormalModuleReplacementPlugin')
-const ProvidePlugin = require('webpack/lib/ProvidePlugin')
 const ModuleConcatenationPlugin = require('webpack/lib/optimize/ModuleConcatenationPlugin')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 const OptimizeJsPlugin = require('optimize-js-plugin')
 const EmitJsonFilePlugin = require('emit-json-file-webpack-plugin')
+const TerserJSPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
-const extractCssPlugin = new ExtractTextPlugin('./[name].[hash].css')
 
 // Settings
 const ENV = process.env.NODE_ENV = process.env.ENV = 'production'
@@ -35,6 +32,7 @@ module.exports = function (env) {
   return webpackMerge(commonConfig({
     env: ENV
   }), {
+    mode: 'production',
 
     output: {
       path: helpers.root('dist'),
@@ -47,7 +45,13 @@ module.exports = function (env) {
       rules: [
         {
           test: /\.css$/,
-          use: extractCssPlugin.extract([
+          use: [
+            {
+              loader: MiniCssExtractPlugin.loader,
+              options: {
+                hmr: true
+              },
+            },
             'css-loader',
             {
               loader: 'postcss-loader',
@@ -57,12 +61,18 @@ module.exports = function (env) {
                 }
               }
             }
-          ]),
+          ],
           include: [helpers.root('src')]
         },
         {
           test: /\.scss$/,
-          use: extractCssPlugin.extract([
+          use: [
+            {
+              loader: MiniCssExtractPlugin.loader,
+              options: {
+                hmr: true
+              },
+            },
             'css-loader',
             {
               loader: 'postcss-loader',
@@ -73,7 +83,7 @@ module.exports = function (env) {
               }
             },
             'sass-loader'
-          ]),
+          ],
           include: [helpers.root('src')]          
         }
       ]
@@ -87,28 +97,17 @@ module.exports = function (env) {
         sourceMap: false
       }),
 
-      extractCssPlugin,
+      new MiniCssExtractPlugin({
+        filename: '[name].css',
+        chunkFilename: '[id].css',
+      }),
+
       new DefinePlugin({
         'ENV': JSON.stringify(METADATA.ENV),
         'HMR': METADATA.HMR,
         'process.env.ENV': JSON.stringify(METADATA.ENV),
         'process.env.NODE_ENV': JSON.stringify(METADATA.ENV),
         'process.env.HMR': METADATA.HMR
-      }),
-
-      new UglifyJsPlugin({
-        parallel: true,
-        uglifyOptions: {
-          ie8: false,
-          ecma: 6,
-          warnings: true,
-          mangle: true, // debug false
-          output: {
-            comments: false,
-            beautify: false,  // debug true
-          }
-        },
-        warnings: true,
       }),
 
       new HashedModuleIdsPlugin(),
@@ -132,6 +131,11 @@ module.exports = function (env) {
       ])
 
     ],
+
+    optimization: {
+      minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
+    },
+
 
     node: {
       global: true,
